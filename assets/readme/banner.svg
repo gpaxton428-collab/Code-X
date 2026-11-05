@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050505"/><stop offset="0.5" stop-color="#140000"/><stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff1a1a"><animate attributeName="stop-color" values="#ff1a1a;#ff6a00;#ff1a1a" dur="4s" repeatCount="indefinite"/></stop>
+      <stop offset="1" stop-color="#8b0000"><animate attributeName="stop-color" values="#8b0000;#ff0000;#8b0000" dur="4s" repeatCount="indefinite"/></stop>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="2"/></filter>
+    <style>
+      .title { font: 900 92px 'Segoe UI', Arial Black, Impact, sans-serif; letter-spacing: 6px; }
+      .sub { font: 600 22px 'Segoe UI', Arial, sans-serif; letter-spacing: 8px; fill: #ff4d4d; }
+      .by { font: 500 18px 'Segoe UI', Arial, sans-serif; letter-spacing: 3px; fill: #cfcfcf; }
+      @keyframes pulse { 0%,100% { opacity: .75 } 50% { opacity: 1 } }
+      @keyframes flick { 0%,92%,100% { opacity: 1 } 94% { opacity: .55 } 96% { opacity: 1 } 98% { opacity: .7 } }
+      .pulse { animation: pulse 2.6s ease-in-out infinite; }
+      .flick { animation: flick 6s linear infinite; }
+    </style>
+  </defs>
+  <rect width="900" height="300" rx="22" fill="url(#bg)"/>
+  <rect x="3" y="3" width="894" height="294" rx="20" fill="none" stroke="url(#red)" stroke-width="3" class="pulse"/>
+  <!-- drifting embers -->
+  <g fill="#ff2a2a" filter="url(#soft)">
+    <circle cx="90" cy="280" r="3"><animate attributeName="cy" values="290;20" dur="5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="5s" repeatCount="indefinite"/></circle>
+    <circle cx="230" cy="290" r="2"><animate attributeName="cy" values="300;30" dur="6.5s" begin="1s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="6.5s" begin="1s" repeatCount="indefinite"/></circle>
+    <circle cx="410" cy="285" r="3"><animate attributeName="cy" values="295;10" dur="7s" begin="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="7s" begin="2s" repeatCount="indefinite"/></circle>
+    <circle cx="590" cy="290" r="2"><animate attributeName="cy" values="300;25" dur="5.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="5.5s" begin="0.5s" repeatCount="indefinite"/></circle>
+    <circle cx="760" cy="285" r="3"><animate attributeName="cy" values="295;15" dur="6s" begin="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="6s" begin="1.5s" repeatCount="indefinite"/></circle>
+    <circle cx="840" cy="290" r="2"><animate attributeName="cy" values="300;40" dur="7.5s" begin="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="7.5s" begin="3s" repeatCount="indefinite"/></circle>
+  </g>
+  <text x="450" y="148" text-anchor="middle" class="title flick" fill="url(#red)" filter="url(#glow)">PAXTON MD</text>
+  <text x="450" y="148" text-anchor="middle" class="title" fill="none" stroke="#ff5a5a" stroke-width="1.2" opacity=".9">PAXTON MD</text>
+  <text x="450" y="196" text-anchor="middle" class="sub pulse">WHATSAPP MULTI-DEVICE BOT</text>
+  <text x="450" y="240" text-anchor="middle" class="by">by Paxton Mathebula</text>
+  <!-- sweeping scan line -->
+  <rect x="-200" y="0" width="120" height="300" fill="#ff0000" opacity=".10">
+    <animate attributeName="x" values="-200;900" dur="4.5s" repeatCount="indefinite"/>
+  </rect>
+</svg>

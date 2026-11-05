@@ -1,0 +1,75 @@
+// .play <song>  ->  youtube-sr search  ->  ytdl-core audio stream. Free,
+// no API key (see lib/api/youtubeFree.js for the trade-offs of that).
+import { searchTracks, getAudioBuffer, maxAudioSeconds } from '../../lib/api/youtubeFree.js';
+import { downloadBuffer, looksLikeAudio } from '../../lib/utils/http.js';
+import { cleanFileName } from '../../lib/utils/format.js';
+import { logger } from '../../lib/utils/logger.js';
+import { react, reply, replyError, usage } from '../../lib/helpers/reply.js';
+import { pickResult as pickSaved } from '../../lib/helpers/musicSession.js';
+import { config } from '../../config/index.js';
+
+const inFlight = new Set();
+
+export default {
+  name: 'play',
+  alias: ['song', 'music', 'p2', 'songplay', 'audio', 'mp3'],
+  description: 'Search a song on YouTube and send it as audio. Usage: .play <song name>  (or .play 2 after .songs)',
+  async execute(sock, msg, args, prefix) {
+    const chatId = msg.key.remoteJid;
+    const sender = msg.key.participant || chatId;
+    const input = args.join(' ').trim();
+    if (!input) return reply(sock, msg, usage(prefix, 'play <song name>', 'play NF - The Search'));
+
+    const lock = `${chatId}|${sender}`;
+    if (inFlight.has(lock)) return reply(sock, msg, '⏳ You already have a song downloading — please wait for it to finish.');
+    inFlight.add(lock);
+    try {
+      await react(sock, msg, '🔍');
+
+      // 1) choose the track: either "n" from the last .songs list, or the top search hit
+      let track = /^\d{1}$/.test(input) ? pickSaved(chatId, sender, Number(input)) : null;
+      if (!track) track = (await searchTracks(input, { limit: 1 }))[0];
+
+      if (track.durationSeconds && track.durationSeconds > maxAudioSeconds()) {
+        await react(sock, msg, '❌');
+        return reply(sock, msg, `❌ *Too long*\n\n"${track.title}" is ${track.duration}. The limit is ${config.limits.maxAudioMinutes} minutes.`);
+      }
+
+      // 2) info card (thumbnail is best-effort and SSRF-checked)
+      const info = `🎵 *${track.title}*${track.artist ? `\n👤 ${track.artist}` : ''}${track.duration ? `\n⏱️ ${track.duration}` : ''}\n\n⬇️ Downloading…`;
+      let sentCard = false;
+      if (track.thumbnail) {
+        try {
+          const { buffer } = await downloadBuffer(track.thumbnail, { maxBytes: 3 * 1024 * 1024, timeoutMs: 10000 });
+          await sock.sendMessage(chatId, { image: buffer, caption: info }, { quoted: msg });
+          sentCard = true;
+        } catch (err) { logger.debug('play', `thumbnail skipped (${err.kind || 'error'})`); }
+      }
+      if (!sentCard) await reply(sock, msg, info);
+
+      // 3) download the audio directly (no intermediate URL to fetch — ytdl streams it straight from YouTube)
+      const buffer = await getAudioBuffer(track.id, { maxBytes: config.limits.maxAudioMb * 1024 * 1024 });
+      if (!looksLikeAudio(buffer)) {
+        logger.warn('play', `download did not look like audio (${buffer.length} bytes)`);
+      }
+
+      // 4) send
+      const fileName = `${cleanFileName(track.title, 'audio')}.m4a`;
+      try {
+        await sock.sendMessage(chatId, { audio: buffer, mimetype: 'audio/mp4', fileName, ptt: false }, { quoted: msg });
+      } catch (sendErr) {
+        logger.warn('play', `audio send failed, retrying as document: ${sendErr.message}`);
+        await sock.sendMessage(chatId, { document: buffer, mimetype: 'audio/mp4', fileName }, { quoted: msg });
+      }
+      await react(sock, msg, '✅');
+    } catch (err) {
+      if (err.kind === 'no_results') {
+        await react(sock, msg, '❌');
+        return reply(sock, msg, `🔎 *No results*\n\nNothing found for "${input.slice(0, 60)}". Check the spelling or try adding the artist name.`);
+      }
+      await replyError(sock, msg, err, 'play');
+    } finally {
+      inFlight.delete(lock);
+    }
+  }
+};
